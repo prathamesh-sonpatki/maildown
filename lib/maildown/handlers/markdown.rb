@@ -24,11 +24,13 @@ module Maildown
       # This handler takes care of both text and html email templates
       # by inspectig the available `"formats"` and rendering the
       # markdown to HTML if one of the formats is `:html`.
-      def self.call(template)
-        # Match beginning whitespace but not newline http://rubular.com/r/uCXQ58OOC8
-        template.source.gsub!(/^[^\S\n]+/, ''.freeze) if Maildown.allow_indentation
+      def self.call(template, source = nil)
+        source ||= template.source
 
-        compiled_source = erb_handler.call(template)
+        # Match beginning whitespace but not newline http://rubular.com/r/uCXQ58OOC8
+        source.gsub!(/^[^\S\n]+/, ''.freeze) if Maildown.allow_indentation
+
+        compiled_source = erb_handler.call(template, source)
 
         if template.formats.include?(:html)
           return "Maildown::MarkdownEngine.to_html(begin;#{compiled_source}; end)"
@@ -56,4 +58,3 @@ ActionView::Template.register_template_handler :"md",     Maildown::Handlers::Ma
 # to allow rails to even attempt to process the file, it needs this
 # handler with ".md.erb" to be registered.
 ActionView::Template.register_template_handler :"md.erb", Maildown::Handlers::Markdown
-
